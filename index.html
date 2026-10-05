@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AppFeed — Unduh Aplikasi & Feed Komunitas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        fontFamily: { sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'] },
+        colors: {
+          page: 'var(--page)', bg: 'var(--bg)', sf: 'var(--sf)', sf2: 'var(--sf2)',
+          ol: 'var(--ol)', lime: '#d6f23a', tx: 'var(--tx)', mu: 'var(--mu)',
+          mu2: 'var(--mu2)', ln: 'var(--ln)', acc: 'var(--acc)', nav: 'var(--nav)'
+        }
+      } }
+    }
+  </script>
+  <style>
+:root,
+:root[data-theme="dark"] {
+  --page: #080b06; --bg: #0d110a; --sf: #192012; --sf2: #222b18;
+  --ol: #4b5a1f; --tx: #eef1e4; --mu: #97a387; --mu2: #c5cfb4;
+  --ln: #2c3720; --acc: #d6f23a; --nav: #12180d;
+}
+:root[data-theme="light"] {
+  --page: #dfe2d6; --bg: #eef0e8; --sf: #ffffff; --sf2: #e2e8d3;
+  --ol: #4b5a1f; --tx: #1b2210; --mu: #667057; --mu2: #4a5540;
+  --ln: #d9ddcc; --acc: #4b5a1f; --nav: #ffffff;
+}
+body { padding-top: env(safe-area-inset-top, 0); }
+#view-home { padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0)); }
+#view-detail { padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0)); }
+.no-sb { scrollbar-width: none; }
+.no-sb::-webkit-scrollbar { display: none; }
+:focus-visible { outline: 2px solid #d6f23a; outline-offset: 2px; }
+[data-theme="light"] :focus-visible { outline-color: #4b5a1f; }
+.ib {
+  display: grid; place-items: center; flex: none; width: 2.5rem; height: 2.5rem;
+  border-radius: .75rem; border: 1px solid var(--ln); background: var(--sf); color: var(--tx); cursor: pointer;
+}
+.btn {
+  border: 0; cursor: pointer; border-radius: 9999px; background: #d6f23a; color: #18200a;
+  font-weight: 700; font-size: 13px; padding: .5rem 1.1rem; transition: .15s;
+}
+.btn:active { transform: scale(.95); }
+.btn-ghost { background: var(--sf2); color: var(--tx); }
+.btn[disabled] { opacity: .7; cursor: default; }
+.tab {
+  border: 0; background: none; color: var(--mu); font-weight: 600; padding: .4rem .75rem;
+  border-radius: 9999px; cursor: pointer; transition: .15s;
+}
+.tab[aria-pressed="true"] { background: var(--sf2); color: var(--acc); }
+.chip {
+  flex: none; border: 1px solid var(--ln); background: var(--sf); color: var(--tx); font-weight: 600;
+  font-size: 13px; border-radius: 9999px; padding: .45rem .9rem; cursor: pointer; transition: .15s;
+}
+.chip[aria-pressed="true"] { background: var(--ol); border-color: var(--ol); color: #fff; }
+.quick {
+  display: flex; flex-direction: column; align-items: center; gap: .4rem; cursor: pointer;
+  background: var(--sf); border: 1px solid var(--ln); border-radius: 1rem; padding: .75rem .25rem;
+  color: var(--tx); font-size: 12px; font-weight: 600; transition: .15s;
+}
+.quick:active { transform: scale(.96); }
+.quick span {
+  display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 9999px;
+  background: var(--sf2); font-size: 20px;
+}
+.nav-i {
+  display: flex; flex-direction: column; align-items: center; gap: 3px; width: 4rem;
+  background: none; border: 0; cursor: pointer; color: var(--mu); font-size: 11px; font-weight: 600; transition: .15s;
+}
+.nav-i[aria-current="page"] { color: var(--acc); }
+.act {
+  display: flex; align-items: center; gap: .4rem; background: none; border: 0; cursor: pointer;
+  color: var(--mu); font-size: 12.5px; padding: .4rem .6rem; border-radius: 9999px; transition: .15s;
+}
+.act:active { transform: scale(.92); }
+.act[aria-pressed="true"] { color: var(--acc); }
+.act[aria-pressed="true"] svg { fill: var(--acc); }
+svg.ic { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: .15s; }
+svg.ic.plus { width: 26px; height: 26px; stroke-width: 2.4; }
+#toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+/* Animasi transisi antar view */
+.view-enter { animation: viewIn .3s ease-out; }
+@keyframes viewIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Loading shimmer */
+.loading { background: linear-gradient(90deg, var(--sf) 25%, var(--sf2) 50%, var(--sf) 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 1rem; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* Detail view transisi */
+#view-detail { transition: opacity .25s, transform .25s; }
+#view-detail.hidden-view { opacity: 0; transform: translateY(16px); pointer-events: none; display: block !important; }
+</style>
+</head>
+<body class="bg-page font-sans text-sm text-tx antialiased">
+
+<div id="app" class="relative mx-auto h-[100dvh] max-w-full overflow-hidden bg-bg">
+
+  <section id="view-home" class="no-sb h-full overflow-y-auto px-4 pb-28 pt-4">
+    <header class="flex items-center gap-2.5">
+      <div class="grid h-10 w-10 flex-none place-items-center rounded-full bg-gradient-to-br from-lime to-ol font-extrabold text-[#18200a]">N</div>
+      <div class="min-w-0 flex-1">
+        <b class="block text-[15px]">Halo, Nahlo</b>
+        <span class="text-xs text-mu">Apa yang mau kamu unduh hari ini?</span>
+      </div>
+      <button id="btn-theme" class="ib" aria-label="Ganti tema"><i data-ic="sun"></i></button>
+      <button class="ib" aria-label="Notifikasi"><i data-ic="bell"></i></button>
+    </header>
+
+    <div class="my-3.5 flex gap-2.5">
+      <label class="flex h-11 flex-1 items-center gap-2 rounded-2xl border border-ln bg-sf px-3 text-mu">
+        <i data-ic="search"></i>
+        <input id="search" type="search" placeholder="Cari aplikasi, developer, atau postingan" aria-label="Cari" class="min-w-0 flex-1 bg-transparent text-tx outline-none placeholder:text-mu">
+      </label>
+      <button id="btn-filter" class="grid h-11 w-11 place-items-center rounded-xl bg-ol text-white" aria-label="Filter"><i data-ic="filter"></i></button>
+    </div>
+
+    <div id="tabs" class="mb-3.5 flex gap-1.5" role="group" aria-label="Tampilan beranda">
+      <button class="tab" data-tab="foryou" aria-pressed="true">Untuk kamu</button>
+      <button class="tab" data-tab="following" aria-pressed="false">Mengikuti</button>
+      <button class="tab" data-tab="latest" aria-pressed="false">Terbaru</button>
+    </div>
+
+    <div class="relative flex min-h-[210px] flex-col justify-end overflow-hidden rounded-3xl bg-gradient-to-br from-[#3d4f15] to-[#0f1508] p-[18px] text-[#eef1e4]">
+      <div class="absolute right-4 top-4 grid h-[84px] w-[84px] rotate-[8deg] place-items-center rounded-[22px] bg-gradient-to-br from-lime to-[#7aa21a] text-[42px]" aria-hidden="true">🛒</div>
+      <small class="font-bold text-lime">Aplikasi pilihan</small>
+      <h2 class="mb-1 mt-0.5 max-w-[230px] text-2xl font-extrabold leading-tight">Kasir Pintar untuk UMKM</h2>
+      <p class="mb-3 max-w-[240px] text-[12.5px] text-[#c5cfb4]">Catat penjualan dan stok dari HP, tanpa internet pun jalan.</p>
+      <div><button class="btn" data-download="kasir">Unduh gratis</button></div>
+    </div>
+
+    <div class="my-4 grid grid-cols-3 gap-2.5">
+      <button class="quick" data-toast="Membuka daftar unduhan"><span>⬇️</span>Unduh</button>
+      <button class="quick" data-toast="Membuka daftar developer"><span>🧑‍💻</span>Developer</button>
+      <button class="quick" data-toast="Membuka form unggah aplikasi"><span>🚀</span>Unggah app</button>
+    </div>
+
+    <div class="mb-2.5 mt-5 flex items-baseline justify-between"><h3 class="text-[17px] font-extrabold">Populer minggu ini</h3><a href="#" class="text-xs text-mu" id="lihat-semua">Lihat semua</a></div>
+    <div id="chips" class="no-sb mb-3 flex gap-2 overflow-x-auto" role="group" aria-label="Kategori"></div>
+    <div id="rail" class="no-sb flex gap-3 overflow-x-auto"></div>
+
+    <div class="mb-2.5 mt-5 flex items-baseline justify-between"><h3 class="text-[17px] font-extrabold">Feed komunitas</h3><a href="#" class="text-xs text-mu">Lihat semua</a></div>
+    <div id="feed"></div>
+  </section>
+
+  <section id="view-detail" class="no-sb absolute inset-0 hidden-view overflow-y-auto bg-bg" aria-live="polite"></section>
+
+  <nav class="absolute inset-x-0 bottom-0 z-10 flex h-[84px] items-start justify-around border-t border-ln bg-nav pt-2.5" aria-label="Navigasi utama">
+    <button class="nav-i" data-nav="home" aria-current="page"><i data-ic="home"></i>Beranda</button>
+    <button class="nav-i" data-toast="Halaman unduhan"><i data-ic="download"></i>Unduhan</button>
+    <button class="-mt-6 grid h-[58px] w-[58px] place-items-center rounded-full bg-lime text-[#18200a] shadow-[0_0_0_6px_var(--bg)]" data-toast="Buat postingan baru" aria-label="Buat postingan"><i data-ic="plus" class="plus"></i></button>
+    <button class="nav-i" data-toast="Postingan tersimpan"><i data-ic="bookmark"></i>Tersimpan</button>
+    <button class="nav-i" data-toast="Halaman profil"><i data-ic="user"></i>Profil</button>
+  </nav>
+
+  <div id="toast" role="alert" class="pointer-events-none absolute bottom-28 left-1/2 z-20 -translate-x-1/2 translate-y-5 whitespace-nowrap rounded-full bg-lime px-4 py-2 font-bold text-[#18200a] opacity-0 transition motion-reduce:transition-none"></div>
+</div>
+
+<script>
+/* AppFeed — semua logika */
+
+// ---------- Data ----------
+const APPS = [
+  { id: 'kasir', name: 'Kasir Pintar', dev: 'Arka Studio', cat: 'Bisnis', size: '18 MB', rate: 4.8, dl: '25 rb+', reviews: '1,2 rb',
+    emoji: '🛒', grad: 'from-[#6e8f1e] to-[#2b3a10]',
+    desc: 'Aplikasi kasir untuk warung dan toko kecil. Catat penjualan, kelola stok, dan lihat laporan harian. Tetap bisa dipakai tanpa internet.' },
+  { id: 'blok', name: 'Blok Petualang', dev: 'Pixel Kita', cat: 'Game', size: '142 MB', rate: 4.6, dl: '100 rb+', reviews: '8 rb',
+    emoji: '⛏️', grad: 'from-[#2f6f6a] to-[#102524]',
+    desc: 'Bangun dunia dari blok, jelajahi gua, dan bermain bersama teman dalam mode multipemain.' },
+  { id: 'duit', name: 'Catatan Duit', dev: 'Rina Dev', cat: 'Alat', size: '9 MB', rate: 4.7, dl: '50 rb+', reviews: '3 rb',
+    emoji: '📒', grad: 'from-[#8a6a1e] to-[#2f2410]',
+    desc: 'Catat pemasukan dan pengeluaran harian, lengkap dengan grafik bulanan dan kategori.' },
+  { id: 'stok', name: 'Stok Gudang', dev: 'Arka Studio', cat: 'Bisnis', size: '14 MB', rate: 4.5, dl: '12 rb+', reviews: '640',
+    emoji: '📦', grad: 'from-[#6a3f8a] to-[#231030]',
+    desc: 'Pantau barang masuk dan keluar gudang dengan pemindai barcode dari kamera HP.' },
+  { id: 'belajar', name: 'Belajar Kode', dev: 'Kelas Digital', cat: 'Edukasi', size: '31 MB', rate: 4.9, dl: '70 rb+', reviews: '5 rb',
+    emoji: '🎓', grad: 'from-[#2f4f8a] to-[#101a30]',
+    desc: 'Kursus pemrograman singkat dengan latihan interaktif langsung di HP.' },
+];
+
+const POSTS = [
+  { id: 1, who: 'Arka Studio', ini: 'AS', role: 'Developer', time: '2 jam lalu', badge: 'Rilis baru', app: 'kasir', likes: 248, comments: 36,
+    text: 'Versi 2.1 Kasir Pintar sudah rilis. Struk bisa dicetak lewat printer Bluetooth, dan laporan harian otomatis tersimpan.' },
+  { id: 2, who: 'Rina', ini: 'RN', role: 'Pengguna', time: '5 jam lalu', likes: 41, comments: 12,
+    text: 'Sudah sebulan pakai Catatan Duit buat kontrol pengeluaran warung. Ada yang tahu cara ekspor ke Excel?' },
+  { id: 3, who: 'Kelas Digital', ini: 'KD', role: 'Developer', time: 'Kemarin', badge: 'Update', app: 'belajar', likes: 120, comments: 18,
+    text: 'Materi baru: dasar JavaScript untuk pemula, lengkap dengan 30 latihan.' },
+];
+
+let COMMENTS = [
+  { who: 'Rina', ini: 'RN', text: 'Struknya rapi, stok otomatis berkurang. Sangat membantu warung saya.' },
+  { who: 'Budi', ini: 'BD', text: 'Apakah bisa dipakai di dua HP sekaligus?' },
+];
+
+// ---------- Ikon ----------
+const IC = {
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10Z"/>',
+  bell: '<path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  filter: '<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+  home: '<path d="M3 11 12 3l9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/>',
+  download: '<path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  bookmark: '<path d="M6 3h12v18l-6-4-6 4Z"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>',
+  heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/>',
+  chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/>',
+  share: '<path d="M4 12v7h16v-7M12 3v12M7 8l5-5 5 5"/>',
+  back: '<path d="m15 5-7 7 7 7"/>',
+};
+const icon = (n, cls) => `<svg class="ic ${cls||''}" viewBox="0 0 24 24" aria-hidden="true">${IC[n]}</svg>`;
+
+function hydrateIcons(root) {
+  (root||document).querySelectorAll('i[data-ic]').forEach(el => {
+    el.outerHTML = icon(el.dataset.ic, el.className);
+  });
+}
+
+// ---------- State ----------
+const state = {
+  cat: 'Semua', tab: 'foryou', q: '',
+  liked: new Set(), saved: new Set(), downloaded: new Set(),
+  followed: new Set(['Arka Studio', 'Kelas Digital']),
+  detailApp: null
+};
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const byId = id => APPS.find(a => a.id === id);
+
+// ---------- Toast ----------
+let toastTimer;
+
+function showToast(msg) {
+  const el = $('#toast');
+  if (!el) return;
+  clearTimeout(toastTimer);
+  el.textContent = msg;
+  el.classList.add('on');
+  toastTimer = setTimeout(() => el.classList.remove('on'), 2200);
+}
+
+// ---------- Komponen ----------
+function appCard(a) {
+  const dl = state.downloaded.has(a.id);
+  return '<article class="card-s w-[150px] flex-none cursor-pointer rounded-[20px] border border-ln bg-sf p-2.5" data-open="'+a.id+'">'+
+    '<div class="mb-2 grid h-[110px] place-items-center rounded-2xl bg-gradient-to-br '+a.grad+' text-[44px]">'+a.emoji+'</div>'+
+    '<b class="block text-sm">'+a.name+'</b>'+
+    '<span class="text-xs text-mu">'+a.cat+' · '+a.size+'</span>'+
+    '<div class="mt-2 flex items-center justify-between">'+
+      '<span class="text-xs font-bold text-acc">★ '+a.rate+'</span>'+
+      '<button class="btn" data-download="'+a.id+'">'+(dl?'Terbuka':'Unduh')+'</button>'+
+    '</div></article>';
+}
+
+function postCard(p) {
+  const a = p.app && byId(p.app);
+  const liked = state.liked.has('p'+p.id);
+  const saved = state.saved.has('p'+p.id);
+  let html = '<article class="post mb-3 rounded-[22px] border border-ln bg-sf p-3.5">'+
+    '<div class="mb-2.5 flex items-center gap-2.5">'+
+      '<div class="grid h-9 w-9 flex-none place-items-center rounded-full bg-gradient-to-br from-lime to-ol text-[13px] font-extrabold text-[#18200a]">'+p.ini+'</div>'+
+      '<div><b class="block">'+p.who+'</b><span class="text-xs text-mu">'+p.role+' · '+p.time+'</span></div>'+
+      (p.badge?'<span class="ml-auto rounded-full bg-sf2 px-2.5 py-0.5 text-[11px] font-bold text-acc">'+p.badge+'</span>':'')+
+    '</div>'+
+    '<p class="mb-2.5">'+p.text+'</p>';
+  if (a) {
+    html += '<div class="flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-ln bg-bg p-2.5" data-open="'+a.id+'">'+
+      '<div class="grid h-[52px] w-[52px] flex-none place-items-center rounded-2xl bg-gradient-to-br '+a.grad+' text-[26px]">'+a.emoji+'</div>'+
+      '<div class="min-w-0 flex-1"><b class="block">'+a.name+'</b><span class="text-xs text-mu">'+a.size+' · ★ '+a.rate+'</span></div>'+
+      '<button class="btn" data-download="'+a.id+'">'+(state.downloaded.has(a.id)?'Terbuka':'Unduh')+'</button></div>';
+  }
+  const likes = p.likes + (liked?1:0);
+  html += '<div class="mt-2.5 flex gap-1">'+
+    '<button class="act" data-like="p'+p.id+'" aria-pressed="'+liked+'">'+icon('heart')+'<span>'+likes+'</span></button>'+
+    '<button class="act">'+icon('chat')+p.comments+'</button>'+
+    '<button class="act" data-toast="Tautan postingan disalin">'+icon('share')+'Bagikan</button>'+
+    '<button class="act ml-auto" data-save="p'+p.id+'" aria-pressed="'+saved+'" aria-label="Simpan">'+icon('bookmark')+'</button>'+
+  '</div></article>';
+  return html;
+}
+
+function commentRow(c) {
+  return '<div class="mb-3 flex gap-2.5">'+
+    '<div class="grid h-8 w-8 flex-none place-items-center rounded-full bg-gradient-to-br from-lime to-ol text-xs font-extrabold text-[#18200a]">'+c.ini+'</div>'+
+    '<div class="flex-1 rounded-b-2xl rounded-tr-2xl rounded-tl bg-sf px-3 py-2"><b class="text-[13px]">'+c.who+'</b><p class="mt-0.5 text-[13px]">'+c.text+'</p></div>'+
+  '</div>';
+}
+
+// ---------- Render ----------
+function renderHome() {
+  const q = state.q.toLowerCase();
+  const cats = ['Semua', ...new Set(APPS.map(a=>a.cat))];
+  $('#chips').innerHTML = cats.map(c => '<button class="chip" data-cat="'+c+'" aria-pressed="'+(c===state.cat)+'">'+c+'</button>').join('');
+
+  const apps = APPS.filter(a => (state.cat==='Semua'||a.cat===state.cat) && (!q||(a.name+a.dev).toLowerCase().includes(q)));
+  $('#rail').innerHTML = apps.length ? apps.map(appCard).join('') : '<p class="py-6 text-mu">Tidak ada aplikasi yang cocok.</p>';
+
+  let posts = POSTS.filter(p => !q||(p.text+p.who).toLowerCase().includes(q));
+  if (state.tab==='following') posts = posts.filter(p => state.followed.has(p.who));
+  if (state.tab==='latest') posts = [...posts].reverse();
+  $('#feed').innerHTML = posts.length ? posts.map(postCard).join('') : '<p class="py-6 text-mu">Belum ada postingan untuk ditampilkan.</p>';
+
+  hydrateIcons($('#chips'));
+  hydrateIcons($('#rail'));
+  hydrateIcons($('#feed'));
+}
+
+function renderDetail(a) {
+  state.detailApp = a;
+  const dl = state.downloaded.has(a.id);
+  const fol = state.followed.has(a.dev);
+  const similar = APPS.filter(x => x.id!==a.id).slice(0, 3);
+  const saved = state.saved.has(a.id);
+  const commHTML = COMMENTS.map(commentRow).join('');
+  const simHTML = similar.map(appCard).join('');
+
+  $('#view-detail').innerHTML =
+    '<div class="relative grid h-[230px] place-items-center bg-gradient-to-br from-[#4a6119] to-[#0d110a] text-[96px] text-[#eef1e4]">'+
+      '<span aria-hidden="true">'+a.emoji+'</span>'+
+      '<button class="ib absolute left-4 top-4 !border-white/20 !bg-black/50 !text-[#eef1e4]" data-back aria-label="Kembali">'+icon('back')+'</button>'+
+    '</div>'+
+    '<div class="relative -mt-6 rounded-t-[28px] bg-gradient-to-b from-sf2 to-bg px-4 pb-24 pt-[18px]">'+
+      '<div class="flex items-start justify-between gap-2.5">'+
+        '<div><h2 class="text-2xl font-extrabold">'+a.name+'</h2><div class="text-mu">oleh '+a.dev+' · '+a.cat+'</div></div>'+
+        '<button class="btn btn-ghost" data-follow="'+a.dev+'">'+(fol?'Mengikuti':'Ikuti')+'</button>'+
+      '</div>'+
+      '<div class="my-3.5 grid grid-cols-3 divide-x divide-ln rounded-2xl border border-ln bg-sf py-3 text-center">'+
+        '<div><b class="block text-base">★ '+a.rate+'</b><span class="text-[11.5px] text-mu">'+a.reviews+' ulasan</span></div>'+
+        '<div><b class="block text-base">'+a.dl+'</b><span class="text-[11.5px] text-mu">Unduhan</span></div>'+
+        '<div><b class="block text-base">'+a.size+'</b><span class="text-[11.5px] text-mu">Ukuran</span></div>'+
+      '</div>'+
+      '<p class="text-mu2">'+a.desc+'</p>'+
+      '<div class="my-3.5 flex gap-2.5">'+
+        '<button class="btn flex-1 !py-3 !text-sm" data-download="'+a.id+'" '+(dl?'disabled':'')+'>'+(dl?'Sudah diunduh':'Unduh')+'</button>'+
+        '<button class="ib !h-12 !w-12 !rounded-full" data-save="'+a.id+'" aria-pressed="'+save
